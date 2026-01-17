@@ -166,12 +166,77 @@ class DataProvider with ChangeNotifier {
       await _apiService.createSubscription(keyword, language, redditLimit,
           youtubeLimit, twitterLimit, intervalSeconds);
       await fetchSubscriptions();
+      
+      // 启动轮询检查任务状态（定时任务会立即执行）
+      _pollTaskStatusForSubscription();
     } catch (e) {
       _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void _pollTaskStatusForSubscription() {
+    // 每3秒检查一次任务状态，最多检查40次（2分钟）
+    int pollCount = 0;
+    const maxPolls = 40;
+    
+    _isTaskRunning = true;
+    _taskProgress = '定时任务启动中...';
+    notifyListeners();
+    
+    Future.delayed(const Duration(seconds: 3), () async {
+      while (pollCount < maxPolls) {
+        try {
+          final status = await _apiService.fetchTaskStatus();
+          final isRunning = status['is_running'] as bool;
+          final progress = status['progress'] as String? ?? '';
+          
+          _isTaskRunning = isRunning;
+          _taskProgress = progress;
+          notifyListeners();
+          
+          if (!isRunning) {
+            // 任务完成，刷新所有数据
+            _taskProgress = '正在刷新数据...';
+            notifyListeners();
+            
+            await Future.delayed(const Duration(seconds: 1));
+            await refreshDashboard();
+            await refreshSourceData();
+            await fetchSubscriptions(); // 刷新订阅列表以更新执行次数
+            
+            _taskProgress = '完成！';
+            notifyListeners();
+            
+            // 2秒后清除状态
+            await Future.delayed(const Duration(seconds: 2));
+            _isTaskRunning = false;
+            _taskProgress = '';
+            notifyListeners();
+            
+            break;
+          }
+          
+          pollCount++;
+          if (pollCount < maxPolls) {
+            await Future.delayed(const Duration(seconds: 3));
+          }
+        } catch (e) {
+          _isTaskRunning = false;
+          _taskProgress = '';
+          notifyListeners();
+          break;
+        }
+      }
+      
+      if (pollCount >= maxPolls) {
+        _isTaskRunning = false;
+        _taskProgress = '';
+        notifyListeners();
+      }
+    });
   }
 
   Future<void> deleteSubscription(int id) async {

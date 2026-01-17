@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import '../providers/data_provider.dart';
 import '../models/subscription.dart';
 import '../utils/theme_utils.dart';
@@ -22,12 +23,26 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() =>
-        Provider.of<DataProvider>(context, listen: false).fetchSubscriptions());
+    Future.microtask(() {
+      Provider.of<DataProvider>(context, listen: false).fetchSubscriptions();
+      // 启动定时刷新订阅列表（每5秒刷新一次，用于显示下次执行时间的倒计时）
+      _startRefreshTimer();
+    });
   }
+
+  void _startRefreshTimer() {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (mounted) {
+        Provider.of<DataProvider>(context, listen: false).fetchSubscriptions();
+      }
+    });
+  }
+
+  late Timer _refreshTimer;
 
   @override
   void dispose() {
+    _refreshTimer.cancel();
     _keywordController.dispose();
     _redditLimitController.dispose();
     _youtubeLimitController.dispose();
@@ -272,6 +287,11 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             itemCount: provider.subscriptions.length,
             itemBuilder: (context, index) {
               final sub = provider.subscriptions[index];
+              
+              // 检查是否有正在运行的定时任务
+              final isRunning = provider.isTaskRunning && 
+                  provider.taskProgress.contains(sub.keyword);
+              
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
@@ -288,12 +308,37 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                   ),
                   subtitle: Padding(
                     padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      '间隔: ${sub.intervalDisplay} | 下次: ${DateTime.fromMillisecondsSinceEpoch(sub.nextRun * 1000).toString().split('.')[0]}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: ThemeUtils.getSecondaryTextColor(context),
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '间隔: ${sub.intervalDisplay} | 下次: ${sub.nextRunDisplay}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: ThemeUtils.getSecondaryTextColor(context),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '已执行: ${sub.executionCount} 次',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: ThemeUtils.getSecondaryTextColor(context),
+                          ),
+                        ),
+                        if (isRunning)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              '⏳ ${provider.taskProgress}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.orange,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   trailing: IconButton(

@@ -70,6 +70,10 @@ patch_*.py
 show_*.py
 clear_*.py
 migrate_*.py
+# 但保留迁移脚本
+!migrate_add_keyword.py
+!migrate_subscriptions.py
+!migrate_execution_count.py
 
 # ==========================================
 # 📝 文档文件 (不提交，只保留核心文档)

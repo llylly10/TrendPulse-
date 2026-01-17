@@ -71,7 +71,8 @@ def init_db_tables():
             twitter_limit INTEGER DEFAULT 30,
             interval_seconds INTEGER DEFAULT 21600,
             last_run INTEGER DEFAULT 0,
-            next_run INTEGER DEFAULT 0
+            next_run INTEGER DEFAULT 0,
+            execution_count INTEGER DEFAULT 0
         )
         """)
         
@@ -155,10 +156,12 @@ def scheduled_collection_task(sub_id):
                     conn.commit()
                     logger.warning(msg)
         
-        # 3. 更新下次运行时间
-        next_run = int(time.time()) + sub["interval_seconds"]
-        conn.execute("UPDATE subscriptions SET last_run = ?, next_run = ? WHERE id = ?",
-                     (int(time.time()), next_run, sub_id))
+        # 3. 更新下次运行时间和执行计数
+        now = int(time.time())
+        next_run = now + sub["interval_seconds"]
+        execution_count = (sub["execution_count"] or 0) + 1
+        conn.execute("UPDATE subscriptions SET last_run = ?, next_run = ?, execution_count = ? WHERE id = ?",
+                     (now, next_run, execution_count, sub_id))
         conn.commit()
         
         task_status["progress"] = "任务完成！"
