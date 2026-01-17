@@ -9,6 +9,9 @@ import '../models/alert.dart';
 class DataProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
 
+  // 暴露 apiService 给外部使用
+  ApiService get apiService => _apiService;
+
   DashboardData? _dashboardData;
   List<SourcePost> _sourcePosts = [];
   List<Subscription> _subscriptions = [];
@@ -28,6 +31,13 @@ class DataProvider with ChangeNotifier {
   String? get error => _error;
   bool get isTaskRunning => _isTaskRunning;
   String get taskProgress => _taskProgress;
+
+  // 设置任务状态
+  void setTaskStatus(bool isRunning, String progress) {
+    _isTaskRunning = isRunning;
+    _taskProgress = progress;
+    notifyListeners();
+  }
 
   Future<void> refreshDashboard() async {
     _isLoading = true;

@@ -27,6 +27,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       Provider.of<DataProvider>(context, listen: false).fetchSubscriptions();
       // 启动定时刷新订阅列表（每5秒刷新一次，用于显示下次执行时间的倒计时）
       _startRefreshTimer();
+      // 启动任务状态轮询（用于显示定时任务的进度）
+      _startTaskStatusPolling();
     });
   }
 
@@ -38,11 +40,36 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     });
   }
 
+  void _startTaskStatusPolling() {
+    _taskStatusTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
+      if (mounted) {
+        final provider = Provider.of<DataProvider>(context, listen: false);
+        try {
+          final status = await provider.apiService.fetchTaskStatus();
+          final isRunning = status['is_running'] as bool;
+          final progress = status['progress'] as String? ?? '';
+          
+          if (isRunning) {
+            provider.setTaskStatus(isRunning, progress);
+          } else if (provider.isTaskRunning) {
+            // 任务刚完成，刷新订阅列表
+            provider.setTaskStatus(false, '');
+            await provider.fetchSubscriptions();
+          }
+        } catch (e) {
+          // 忽略错误
+        }
+      }
+    });
+  }
+
   late Timer _refreshTimer;
+  late Timer _taskStatusTimer;
 
   @override
   void dispose() {
     _refreshTimer.cancel();
+    _taskStatusTimer.cancel();
     _keywordController.dispose();
     _redditLimitController.dispose();
     _youtubeLimitController.dispose();

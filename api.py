@@ -6,6 +6,7 @@ import json
 import os
 import logging
 import time
+import threading
 from datetime import datetime
 
 # 配置日志
@@ -200,11 +201,13 @@ def check_subscriptions():
             
             logger.info(f"  ✓ 触发任务执行: {sub['keyword']}")
             
-            # 提交到后台任务或直接运行 (这里直接提交到 scheduler 的 executor)
-            scheduler.add_job(scheduled_collection_task, 'date', args=[sub["id"]])
+            # 直接在后台线程中执行任务（不使用 scheduler）
+            # 这样可以立即更新 task_status，前端可以立即看到进度
+            import threading
+            thread = threading.Thread(target=scheduled_collection_task, args=(sub["id"],), daemon=True)
+            thread.start()
             
-            # 更新 next_run 避免重复提交 (先暂时推迟，实际更新在任务完成后，或者这里先推迟一点)
-            # 为防止任务积压，这里先更新 next_run
+            # 更新 next_run 避免重复提交
             next_run_temp = now + sub["interval_seconds"]
             conn.execute("UPDATE subscriptions SET next_run = ? WHERE id = ?", (next_run_temp, sub["id"]))
             conn.commit()
