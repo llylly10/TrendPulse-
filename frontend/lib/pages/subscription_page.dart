@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
+import 'dart:developer' as developer;
 import '../providers/data_provider.dart';
 import '../models/subscription.dart';
 import '../utils/theme_utils.dart';
+
+final logger = developer.log;
 
 class SubscriptionPage extends StatefulWidget {
   @override
@@ -41,7 +44,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   }
 
   void _startTaskStatusPolling() {
-    _taskStatusTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
+    _taskStatusTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
       if (mounted) {
         final provider = Provider.of<DataProvider>(context, listen: false);
         try {
@@ -49,15 +52,16 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           final isRunning = status['is_running'] as bool;
           final progress = status['progress'] as String? ?? '';
           
-          if (isRunning) {
-            provider.setTaskStatus(isRunning, progress);
-          } else if (provider.isTaskRunning) {
-            // 任务刚完成，刷新订阅列表
-            provider.setTaskStatus(false, '');
+          // 总是更新任务状态
+          provider.setTaskStatus(isRunning, progress);
+          
+          // 如果任务刚完成（从运行变为不运行），刷新数据
+          if (!isRunning && provider.isTaskRunning) {
+            await Future.delayed(const Duration(milliseconds: 500));
             await provider.fetchSubscriptions();
           }
         } catch (e) {
-          // 忽略错误
+          logger.info('轮询错误: $e');
         }
       }
     });
@@ -315,9 +319,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             itemBuilder: (context, index) {
               final sub = provider.subscriptions[index];
               
-              // 检查是否有正在运行的定时任务
-              final isRunning = provider.isTaskRunning && 
-                  provider.taskProgress.contains(sub.keyword);
+              // 只要任务在运行就显示进度
+              final isRunning = provider.isTaskRunning;
               
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
