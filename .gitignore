@@ -19,6 +19,7 @@
 *.json
 !package.json
 !pubspec.yaml
+!frontend/web/manifest.json
 
 # ==========================================
 # � Python 环境和缓存
