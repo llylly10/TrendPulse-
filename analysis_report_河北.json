@@ -1,0 +1,19 @@
+{
+  "final_controversies": [
+    "围绕DeepSeek等开源大模型的“领先/冲击大厂”叙事引发站队式争论，技术评价与情绪对立交织",
+    "AI订阅折扣/外链聚合与加密币“喊单战绩”内容混入，用户在“信息服务”与“营销诈骗/拉盘”之间分歧明显",
+    "对Claude等模型“限制过多影响工作”的抱怨，与平台审查/使用政策的必要性发生冲突，讨论易激化"
+  ],
+  "human_summary": "河北相关讨论以AI模型资讯为主，集中在DeepSeek、Claude、Gemini、Qwen等发布对比、教程与微调工具推荐。部分内容夸大“新架构领先、冲击大厂”，引发站队争执；也有人关注OpenAI与Google谁主导未来。与此同时，外链堆叠的一站式订阅折扣、甚至加密币喊单混入，可信度受质疑，噪声增大。另有对Claude限制多的抱怨及夹杂脏话的情绪化表达，使整体舆论出现负面波动。",
+  "mermaid_graph": "graph TD; A[河北] --> B[模型对比]; A --> C[开源突破]; A --> D[站队争议]; A --> E[导流营销]; A --> F[币圈喊单]; A --> G[审查抱怨]; A --> H[情绪噪声];",
+  "node_sentiments": {
+    "B": "neutral",
+    "C": "positive",
+    "D": "negative",
+    "E": "negative",
+    "F": "negative",
+    "G": "negative",
+    "H": "negative"
+  },
+  "avg_sentiment": 62.0
+}

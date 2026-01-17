@@ -1,0 +1,95 @@
+# 多源舆情分析系统 - Python 依赖包
+# ============================================
+
+# Web 框架
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# HTTP 请求
+requests==2.31.0
+
+# 数据处理
+pandas==2.1.4
+numpy==1.24.4
+
+# AI 相关
+openai==1.3.7
+tiktoken==0.5.2
+
+# 网页解析
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# YouTube 数据采集
+youtube-search-python==1.6.6
+youtube-transcript-api==0.6.1
+
+# 任务调度
+APScheduler==3.10.4
+
+# 环境变量管理
+python-dotenv==1.0.0
+
+# Selenium (可选，Twitter 备选方案)
+selenium==4.15.2
+webdriver-manager==4.0.1
+
+# 数据库 (SQLite 是 Python 内置的，但可能需要额外工具)
+# sqlite3 是 Python 内置模块，无需安装
+
+# 开发和测试工具
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# 日志和调试
+colorlog==6.8.0
+
+# 其他工具
+python-multipart==0.0.6  # FastAPI 文件上传支持
+Jinja2==3.1.2            # FastAPI 模板支持
+
+# ============================================
+# 可选依赖 (根据需要安装)
+# ============================================
+
+# 如果需要更好的 JSON 处理
+# orjson==3.9.10
+
+# 如果需要更快的 HTTP 客户端
+# httpx==0.25.2
+
+# 如果需要异步数据库操作
+# aiosqlite==0.19.0
+
+# 如果需要数据可视化
+# matplotlib==3.8.2
+# plotly==5.17.0
+
+# 如果需要更多的数据处理功能
+# scikit-learn==1.3.2
+
+# 如果需要图像处理 (验证码识别等)
+# Pillow==10.1.0
+# pytesseract==0.3.10
+
+# 如果需要代理支持
+# requests[socks]==2.31.0
+
+# ============================================
+# 版本说明
+# ============================================
+# Python 版本要求: >= 3.10
+# 
+# 安装命令:
+# pip install -r requirements.txt
+#
+# 或使用 uv (更快的包管理器):
+# uv pip install -r requirements.txt
+#
+# 开发环境安装 (包含测试工具):
+# pip install -r requirements.txt
+#
+# 生产环境可以移除以下包:
+# - pytest
+# - pytest-asyncio
+# - colorlog
