@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
-import 'dart:developer' as developer;
 import '../providers/data_provider.dart';
 import '../models/subscription.dart';
 import '../utils/theme_utils.dart';
-
-final logger = developer.log;
 
 class SubscriptionPage extends StatefulWidget {
   @override
@@ -61,7 +58,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             await provider.fetchSubscriptions();
           }
         } catch (e) {
-          logger.info('轮询错误: $e');
+          // 忽略错误
         }
       }
     });
