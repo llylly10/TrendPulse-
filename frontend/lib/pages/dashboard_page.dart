@@ -19,6 +19,9 @@ class _DashboardPageState extends State<DashboardPage> {
   final _youtubeLimitController = TextEditingController(text: '30');
   final _twitterLimitController = TextEditingController(text: '30');
   bool _isExpanded = false;
+  
+  // 跟踪任务状态，避免重复显示 SnackBar
+  bool _wasTaskRunning = false;
 
   @override
   void initState() {
@@ -238,33 +241,82 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
       body: Consumer<DataProvider>(
         builder: (context, provider, child) {
-          // 显示任务进度
-          if (provider.isTaskRunning && provider.taskProgress.isNotEmpty) {
+          // 检测任务状态变化
+          if (provider.isTaskRunning && !_wasTaskRunning) {
+            // 任务刚开始
+            _wasTaskRunning = true;
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              if (mounted) {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(child: Text(provider.taskProgress)),
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(provider.taskProgress)),
+                      ],
+                    ),
+                    duration: const Duration(seconds: 60),
                   ),
-                  duration: const Duration(seconds: 60),
-                ),
-              );
+                );
+              }
             });
-          } else if (!provider.isTaskRunning && provider.taskProgress == '完成！') {
+          } else if (!provider.isTaskRunning && _wasTaskRunning) {
+            // 任务刚完成
+            _wasTaskRunning = false;
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              if (mounted) {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Row(
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.green),
+                        SizedBox(width: 12),
+                        Text('✓ 任务完成，数据已刷新'),
+                      ],
+                    ),
+                    duration: Duration(seconds: 3),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                // 刷新仪表板数据
+                provider.refreshDashboard();
+              }
+            });
+          } else if (provider.isTaskRunning && _wasTaskRunning) {
+            // 任务运行中，更新进度
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(provider.taskProgress)),
+                      ],
+                    ),
+                    duration: const Duration(seconds: 60),
+                  ),
+                );
+              }
             });
           }
           
