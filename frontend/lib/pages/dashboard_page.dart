@@ -264,7 +264,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         Expanded(child: Text(provider.taskProgress)),
                       ],
                     ),
-                    duration: const Duration(seconds: 60),
+                    duration: const Duration(seconds: 120),
                   ),
                 );
               }
@@ -292,11 +292,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 provider.refreshDashboard();
               }
             });
-          } else if (provider.isTaskRunning && _wasTaskRunning) {
-            // 任务运行中，更新进度
+          } else if (provider.isTaskRunning && _wasTaskRunning && provider.taskProgress.isNotEmpty) {
+            // 任务运行中，更新进度（但不要太频繁）
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                // 只在进度信息改变时才更新 SnackBar
+                final currentSnackBar = ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Row(
@@ -313,7 +314,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         Expanded(child: Text(provider.taskProgress)),
                       ],
                     ),
-                    duration: const Duration(seconds: 60),
+                    duration: const Duration(seconds: 120),
                   ),
                 );
               }

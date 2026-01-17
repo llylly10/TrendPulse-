@@ -148,9 +148,8 @@ def scheduled_collection_task(sub_id):
         
         # 创建进度回调函数
         def progress_callback(msg):
-            # 只更新关键的进度信息
-            if any(x in msg for x in ["正在抓取", "正在保存", "正在清洗", "正在读取", "正在执行", "正在获取"]):
-                update_task_status(progress=msg)
+            # 更新所有进度信息（不过滤）
+            update_task_status(progress=msg)
         
         logger.info(f"Scheduled Collection: {keyword}")
         run_collection(keyword, language, sub["reddit_limit"], sub["youtube_limit"], sub["twitter_limit"], progress_callback=progress_callback)
@@ -436,9 +435,8 @@ async def collect_data(params: dict, background_tasks: BackgroundTasks):
     
     def run_pipeline():
         def progress_callback(msg):
-            # 只更新关键的进度信息
-            if any(x in msg for x in ["正在抓取", "正在保存", "正在清洗", "正在读取", "正在执行", "正在获取"]):
-                update_task_status(progress=msg)
+            # 更新所有进度信息（不过滤）
+            update_task_status(progress=msg)
         
         update_task_status(is_running=True, current_task=f"manual_{keyword}", progress=f"正在采集数据: {keyword}")
         

@@ -41,7 +41,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   }
 
   void _startTaskStatusPolling() {
-    _taskStatusTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
+    _taskStatusTimer = Timer.periodic(const Duration(milliseconds: 500), (_) async {
       if (mounted) {
         final provider = Provider.of<DataProvider>(context, listen: false);
         try {
