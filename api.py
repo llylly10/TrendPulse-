@@ -31,7 +31,8 @@ REPORT_FILE = "analysis_report.json"
 scheduler = BackgroundScheduler()
 scheduler.start()
 
-# 任务状态跟踪
+# 任务状态跟踪（使用线程锁保证线程安全）
+task_status_lock = threading.Lock()
 task_status = {
     "is_running": False,
     "current_task": None,
@@ -108,25 +109,34 @@ def clean_nan(obj):
         return obj
     return obj
 
+def update_task_status(is_running=None, progress=None, current_task=None):
+    """线程安全地更新 task_status"""
+    global task_status
+    with task_status_lock:
+        if is_running is not None:
+            task_status["is_running"] = is_running
+        if progress is not None:
+            task_status["progress"] = progress
+        if current_task is not None:
+            task_status["current_task"] = current_task
+        task_status["last_update"] = int(time.time())
+        logger.info(f"[TaskStatus] is_running={task_status['is_running']}, progress={task_status['progress']}")
+
 # --- 调度任务逻辑 ---
 def scheduled_collection_task(sub_id):
-    global task_status
     logger.info(f"Running scheduled task for subscription {sub_id}")
     
-    task_status["is_running"] = True
-    task_status["current_task"] = f"subscription_{sub_id}"
-    task_status["last_update"] = int(time.time())
-    task_status["progress"] = "开始执行定时任务..."
+    update_task_status(is_running=True, progress="开始执行定时任务...", current_task=f"subscription_{sub_id}")
     
     conn = get_db_connection()
     if not conn: 
-        task_status["is_running"] = False
+        update_task_status(is_running=False)
         return
     
     try:
         sub = conn.execute("SELECT * FROM subscriptions WHERE id = ?", (sub_id,)).fetchone()
         if not sub: 
-            task_status["is_running"] = False
+            update_task_status(is_running=False)
             return
         
         keyword = sub["keyword"]
@@ -136,16 +146,16 @@ def scheduled_collection_task(sub_id):
         from collect import run_collection
         from ai_analysis import run_analysis
         
-        task_status["progress"] = f"正在采集数据: {keyword}"
+        update_task_status(progress=f"正在采集数据: {keyword}")
         logger.info(f"Scheduled Collection: {keyword}")
         run_collection(keyword, language, sub["reddit_limit"], sub["youtube_limit"], sub["twitter_limit"])
         
-        task_status["progress"] = "正在进行 AI 分析..."
+        update_task_status(progress="正在进行 AI 分析...")
         logger.info("Scheduled Analysis")
         run_analysis(language=language, keyword=keyword)
         
         # 2. 检查情感得分并报警
-        task_status["progress"] = "检查情感得分..."
+        update_task_status(progress="检查情感得分...")
         if os.path.exists(REPORT_FILE):
             with open(REPORT_FILE, "r", encoding="utf-8") as f:
                 report = json.load(f)
@@ -165,16 +175,16 @@ def scheduled_collection_task(sub_id):
                      (now, next_run, execution_count, sub_id))
         conn.commit()
         
-        task_status["progress"] = "任务完成！"
+        update_task_status(progress="任务完成！")
         logger.info(f"✓ 定时任务完成: {keyword}")
         
     except Exception as e:
         logger.error(f"Scheduled task failed: {e}")
-        task_status["progress"] = f"任务失败: {str(e)}"
+        update_task_status(progress=f"任务失败: {str(e)}")
     finally:
         conn.close()
-        task_status["is_running"] = False
-        task_status["last_update"] = int(time.time())
+        update_task_status(is_running=False)
+        logger.info("Task status set to is_running=False")
 
 def check_subscriptions():
     """每分钟检查一次是否有任务需要运行"""
@@ -421,31 +431,26 @@ async def collect_data(params: dict, background_tasks: BackgroundTasks):
     twitter_limit = params.get("twitter_limit", 30)
     
     def run_pipeline():
-        global task_status
-        task_status["is_running"] = True
-        task_status["current_task"] = f"manual_{keyword}"
-        task_status["last_update"] = int(time.time())
+        update_task_status(is_running=True, current_task=f"manual_{keyword}", progress=f"正在采集数据: {keyword}")
         
         try:
             from collect import run_collection
             from ai_analysis import run_analysis
             
-            task_status["progress"] = f"正在采集数据: {keyword}"
             logger.info(f"Starting collection for: {keyword}")
             run_collection(keyword, language, reddit_limit, youtube_limit, twitter_limit)
             
-            task_status["progress"] = "正在进行 AI 分析..."
+            update_task_status(progress="正在进行 AI 分析...")
             logger.info("Starting AI analysis")
             run_analysis(language=language, keyword=keyword)
             
-            task_status["progress"] = "任务完成！"
+            update_task_status(progress="任务完成！")
             logger.info("Pipeline completed successfully")
         except Exception as e:
             logger.error(f"Pipeline failed: {e}")
-            task_status["progress"] = f"任务失败: {str(e)}"
+            update_task_status(progress=f"任务失败: {str(e)}")
         finally:
-            task_status["is_running"] = False
-            task_status["last_update"] = int(time.time())
+            update_task_status(is_running=False)
 
     background_tasks.add_task(run_pipeline)
     return {"status": "accepted", "message": "Collection and analysis started in background"}
@@ -453,7 +458,14 @@ async def collect_data(params: dict, background_tasks: BackgroundTasks):
 # 获取任务状态
 @app.get("/api/task-status")
 async def get_task_status():
-    return task_status
+    with task_status_lock:
+        # 返回一个副本，避免并发修改问题
+        return {
+            "is_running": task_status["is_running"],
+            "current_task": task_status["current_task"],
+            "last_update": task_status["last_update"],
+            "progress": task_status["progress"],
+        }
 
 
 # --- 订阅相关 API ---
