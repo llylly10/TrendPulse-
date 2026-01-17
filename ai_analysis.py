@@ -240,14 +240,24 @@ Return ONLY valid JSON:
 # 5. 主流程
 # =========================
 
-def run_analysis(language: str = "zh", keyword: str = None):
-    print(f"🚀 开始 AI 舆情分析流程 (语言: {language}, 关键词: {keyword or '全部'})...")
+def run_analysis(language: str = "zh", keyword: str = None, progress_callback=None):
+    """
+    AI 舆情分析
+    progress_callback: 可选的进度回调函数，签名为 progress_callback(message)
+    """
+    def update_progress(msg):
+        print(msg)
+        if progress_callback:
+            progress_callback(msg)
+    
+    update_progress(f"🚀 开始 AI 舆情分析流程 (语言: {language}, 关键词: {keyword or '全部'})...")
 
     if not os.getenv("OPENAI_API_KEY"):
-        print("❌ 未检测到 OPENAI_API_KEY")
+        update_progress("❌ 未检测到 OPENAI_API_KEY")
         return
 
     # 读取数据
+    update_progress("📖 正在读取数据...")
     conn = sqlite3.connect(DB_NAME)
     if keyword:
         df = pd.read_sql_query("SELECT content FROM cleaned_data WHERE keyword = ?", conn, params=(keyword,))
@@ -256,18 +266,20 @@ def run_analysis(language: str = "zh", keyword: str = None):
     conn.close()
 
     if df.empty:
-        print(f"⚠️ 数据库中没有可分析数据 (关键词: {keyword or '全部'})")
+        update_progress(f"⚠️ 数据库中没有可分析数据 (关键词: {keyword or '全部'})")
         return
 
     # 清洗
+    update_progress("🧹 正在清洗数据...")
     df = filter_dirty_data(df)
 
     # 采样控制成本
     if len(df) > SAMPLE_SIZE:
-        print(f"📉 数据量过大，采样 {SAMPLE_SIZE} 条")
+        update_progress(f"📉 数据量过大，采样 {SAMPLE_SIZE} 条")
         df = df.sample(SAMPLE_SIZE, random_state=42)
 
     # 分批
+    update_progress("📦 正在分批处理...")
     batches = []
     current_batch = ""
     current_tokens = 0
@@ -286,35 +298,38 @@ def run_analysis(language: str = "zh", keyword: str = None):
     if current_batch.strip():
         batches.append(current_batch.strip())
 
-    print(f"📦 共生成 {len(batches)} 个批次")
+    update_progress(f"📦 共生成 {len(batches)} 个批次")
 
     # Map
+    update_progress("🔄 正在执行 Map 阶段...")
     map_results = map_phase(batches, language)
     if not map_results:
-        print("❌ Map 阶段无结果")
+        update_progress("❌ Map 阶段无结果")
         return
 
     # Reduce
+    update_progress("🔄 正在执行 Reduce 阶段...")
     final_report = reduce_phase(map_results, language, keyword)
     if not final_report:
         return
 
     # 输出
-    print("\n" + "=" * 50)
-    print("📊 AI 舆情分析报告")
-    print("=" * 50)
-    print(f"关键词：{keyword or '全部'}")
-    print(f"总体情感得分：{final_report['avg_sentiment']} / 100\n")
+    update_progress("\n" + "=" * 50)
+    update_progress("📊 AI 舆情分析报告")
+    update_progress("=" * 50)
+    update_progress(f"关键词：{keyword or '全部'}")
+    update_progress(f"总体情感得分：{final_report['avg_sentiment']} / 100\n")
 
-    print("🔥 三大核心争议点：")
+    update_progress("🔥 三大核心争议点：")
     for i, p in enumerate(final_report["final_controversies"], 1):
-        print(f"{i}. {p}")
+        update_progress(f"{i}. {p}")
 
-    print("\n📝 人话摘要：")
-    print(final_report["human_summary"])
-    print("=" * 50)
+    update_progress("\n📝 人话摘要：")
+    update_progress(final_report["human_summary"])
+    update_progress("=" * 50)
 
     # 保存 - 按关键词保存到不同的文件
+    update_progress("💾 正在保存报告...")
     if keyword:
         report_file = f"analysis_report_{keyword}.json"
     else:

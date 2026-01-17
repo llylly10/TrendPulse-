@@ -375,37 +375,48 @@ def save_twitter(task_id, tweets):
         conn.commit()
 
 # ----------------- 6. 统一采集入口 -----------------
-def run_collection(keyword, language="en", reddit_limit=30, youtube_limit=30, twitter_limit=30):
-    print("--- 正在初始化数据库 ---")
+def run_collection(keyword, language="en", reddit_limit=30, youtube_limit=30, twitter_limit=30, progress_callback=None):
+    """
+    采集数据
+    progress_callback: 可选的进度回调函数，签名为 progress_callback(message)
+    """
+    def update_progress(msg):
+        print(msg)
+        if progress_callback:
+            progress_callback(msg)
+    
+    update_progress("--- 正在初始化数据库 ---")
     init_db()
 
     # -------- Reddit ----------
     reddit_task_id = create_task("reddit", keyword, language, reddit_limit)
-    print(f"\n[Reddit 任务 {reddit_task_id}] 正在抓取 '{keyword}'...")
+    update_progress(f"[Reddit] 正在抓取 '{keyword}'...")
     reddit_posts = fetch_reddit(keyword, reddit_limit, language)
+    update_progress(f"[Reddit] 正在保存数据...")
     save_reddit(reddit_task_id, reddit_posts)
-    print(f"成功保存 {len(reddit_posts)} 条 Reddit 帖子。")
+    update_progress(f"[Reddit] 成功保存 {len(reddit_posts)} 条帖子")
 
     # -------- YouTube ----------
     youtube_task_id = create_task("youtube", keyword, language, youtube_limit)
-    print(f"\n[YouTube 任务 {youtube_task_id}] 正在抓取 '{keyword}'...")
+    update_progress(f"[YouTube] 正在抓取 '{keyword}'...")
     youtube_videos = fetch_youtube(keyword, youtube_limit, language)
     if youtube_videos:
-        # 获取字幕可能比较慢
+        update_progress(f"[YouTube] 正在获取字幕...")
         youtube_videos = fetch_transcripts(youtube_videos, language)
+        update_progress(f"[YouTube] 正在保存数据...")
         save_youtube(youtube_task_id, youtube_videos)
-    print(f"成功保存 {len(youtube_videos)} 个 YouTube 视频。")
+    update_progress(f"[YouTube] 成功保存 {len(youtube_videos)} 个视频")
 
     # -------- Twitter ----------
     twitter_task_id = create_task("twitter", keyword, language, twitter_limit)
-    print(f"\n[Twitter 任务 {twitter_task_id}] 正在抓取 '{keyword}'...")
+    update_progress(f"[Twitter] 正在抓取 '{keyword}'...")
     twitter_posts = fetch_twitter(keyword, twitter_limit, language)
+    update_progress(f"[Twitter] 正在保存数据...")
     save_twitter(twitter_task_id, twitter_posts)
-    print(f"成功保存 {len(twitter_posts)} 条 Twitter 推文。")
+    update_progress(f"[Twitter] 成功保存 {len(twitter_posts)} 条推文")
 
     # -------- 自动清洗 ----------
-    print("\n--- 所有采集任务已完成，开始自动清洗数据 ---")
-    # 只清洗当前任务的数据
+    update_progress("--- 正在清洗数据 ---")
     task_ids = [reddit_task_id, youtube_task_id, twitter_task_id]
     process_data(keyword, task_ids)
 

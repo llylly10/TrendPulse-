@@ -146,13 +146,17 @@ def scheduled_collection_task(sub_id):
         from collect import run_collection
         from ai_analysis import run_analysis
         
-        update_task_status(progress=f"正在采集数据: {keyword}")
-        logger.info(f"Scheduled Collection: {keyword}")
-        run_collection(keyword, language, sub["reddit_limit"], sub["youtube_limit"], sub["twitter_limit"])
+        # 创建进度回调函数
+        def progress_callback(msg):
+            # 只更新关键的进度信息
+            if any(x in msg for x in ["正在抓取", "正在保存", "正在清洗", "正在读取", "正在执行", "正在获取"]):
+                update_task_status(progress=msg)
         
-        update_task_status(progress="正在进行 AI 分析...")
+        logger.info(f"Scheduled Collection: {keyword}")
+        run_collection(keyword, language, sub["reddit_limit"], sub["youtube_limit"], sub["twitter_limit"], progress_callback=progress_callback)
+        
         logger.info("Scheduled Analysis")
-        run_analysis(language=language, keyword=keyword)
+        run_analysis(language=language, keyword=keyword, progress_callback=progress_callback)
         
         # 2. 检查情感得分并报警
         update_task_status(progress="检查情感得分...")
@@ -431,6 +435,11 @@ async def collect_data(params: dict, background_tasks: BackgroundTasks):
     twitter_limit = params.get("twitter_limit", 30)
     
     def run_pipeline():
+        def progress_callback(msg):
+            # 只更新关键的进度信息
+            if any(x in msg for x in ["正在抓取", "正在保存", "正在清洗", "正在读取", "正在执行", "正在获取"]):
+                update_task_status(progress=msg)
+        
         update_task_status(is_running=True, current_task=f"manual_{keyword}", progress=f"正在采集数据: {keyword}")
         
         try:
@@ -438,11 +447,11 @@ async def collect_data(params: dict, background_tasks: BackgroundTasks):
             from ai_analysis import run_analysis
             
             logger.info(f"Starting collection for: {keyword}")
-            run_collection(keyword, language, reddit_limit, youtube_limit, twitter_limit)
+            run_collection(keyword, language, reddit_limit, youtube_limit, twitter_limit, progress_callback=progress_callback)
             
             update_task_status(progress="正在进行 AI 分析...")
             logger.info("Starting AI analysis")
-            run_analysis(language=language, keyword=keyword)
+            run_analysis(language=language, keyword=keyword, progress_callback=progress_callback)
             
             update_task_status(progress="任务完成！")
             logger.info("Pipeline completed successfully")
