@@ -1,252 +1,151 @@
-# 多源舆情分析系统 - Git 忽略文件
-# ==========================================
+# 多源舆情分析系统 - 精简版 Git 忽略文件
+# =============================================
+# 只提交核心代码，忽略其他所有文件
+# =============================================
 
 # ==========================================
-# 🔐 敏感信息和配置文件
+# 🔐 敏感信息 (绝对不能提交)
 # ==========================================
-.env                    # 环境变量文件 (包含 API Key)
-*.env                   # 所有环境变量文件
-.env.local
-.env.production
-.env.staging
+.env
+*.env
+.env.*
 
 # ==========================================
-# 🗄️ 数据库文件
+# 🗄️ 数据文件 (不提交)
 # ==========================================
-*.db                    # SQLite 数据库文件
+*.db
 *.sqlite
 *.sqlite3
-multi_source.db         # 主数据库
-reddit.db              # Reddit 数据库
-trendpulse.db          # 旧数据库
+*.json
+!package.json
+!pubspec.yaml
 
 # ==========================================
-# 📊 生成的数据文件
+# � Python 环境和缓存
 # ==========================================
-analysis_report*.json  # AI 分析报告
-*.json                 # 临时 JSON 文件 (保留配置文件)
-!package.json          # 保留 package.json
-!pubspec.yaml          # 保留 Flutter 配置
-!*.config.json         # 保留配置文件
-
-# ==========================================
-# 🐍 Python 相关
-# ==========================================
-__pycache__/           # Python 缓存目录
-*.py[cod]              # Python 编译文件
+__pycache__/
+*.py[cod]
 *$py.class
-*.so                   # 共享库文件
-
-# 虚拟环境
 venv/
 env/
 ENV/
 .venv/
-.env/
-Lib/                   # Windows 虚拟环境
-Scripts/               # Windows 虚拟环境
-include/               # 虚拟环境头文件
-pyvenv.cfg             # 虚拟环境配置
-
-# Python 分发
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
+Lib/
+Scripts/
+include/
+pyvenv.cfg
 *.egg-info/
-.installed.cfg
-*.egg
-
-# PyInstaller
-*.manifest
-*.spec
-
-# 单元测试
-.tox/
-.coverage
-.coverage.*
-.cache
-.pytest_cache/
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
+build/
+dist/
 
 # ==========================================
-# 📱 Flutter 相关
+# � Flutter 构建文件
 # ==========================================
 frontend/.dart_tool/
-frontend/.flutter-plugins
-frontend/.flutter-plugins-dependencies
+frontend/.flutter-plugins*
 frontend/.packages
 frontend/.pub-cache/
 frontend/.pub/
 frontend/build/
+
+# Flutter 生成的文件
+frontend/windows/flutter/generated_plugin_registrant.*
+frontend/windows/runner/runner.exe.manifest
 frontend/ios/Flutter/flutter_assets/
 frontend/ios/Flutter/flutter_export_environment.sh
 frontend/ios/Runner/GeneratedPluginRegistrant.*
 
-# Flutter Web
-frontend/web/icons/
+# Flutter Web 生成的文件（保留图标）
 frontend/web/manifest.json
 
-# Flutter Windows
-frontend/windows/flutter/generated_plugin_registrant.cc
-frontend/windows/flutter/generated_plugin_registrant.h
+# ==========================================
+# 🧪 测试和调试文件 (不提交)
+# ==========================================
+test_*.py
+check_*.py
+debug_*.py
+create_test_*.py
+patch_*.py
+show_*.py
+clear_*.py
+migrate_*.py
 
 # ==========================================
-# 🔧 开发工具和 IDE
+# 📝 文档文件 (不提交，只保留核心文档)
 # ==========================================
-.vscode/               # VS Code 配置
-.idea/                 # IntelliJ IDEA 配置
-*.swp                  # Vim 临时文件
-*.swo
-*~                     # 备份文件
-.DS_Store              # macOS 系统文件
-Thumbs.db              # Windows 缩略图
-desktop.ini            # Windows 桌面配置
+*_FIX.md
+*_GUIDE.md
+*_SUMMARY.md
+FIXES_*.md
+FINAL_*.md
+SOURCE_*.md
+KEYWORD_*.md
+SCHEDULER_*.md
+TASK_*.md
+USER_*.md
+MODEL_*.md
+REPORT_*.md
+GITHUB_*.md
+VERIFY_*.md
+QUICK_*.md
+README_*.md
+
+# 只保留这些核心文档
+!README.md
+!TECHNICAL.md
+!ANTI_SCRAPING.md
 
 # ==========================================
-# 📝 日志文件
+# 🔧 工具和临时文件
 # ==========================================
-*.log                  # 所有日志文件
-logs/
-log/
-app.log
-error.log
-debug.log
-
-# ==========================================
-# 🧪 测试和临时文件
-# ==========================================
-test_*.py              # 测试脚本 (可选择性提交)
-check_*.py             # 检查脚本
-debug_*.py             # 调试脚本
-temp/
-tmp/
+*.log
 *.tmp
 *.temp
-.lock                  # 锁文件
-CACHEDIR.TAG          # 缓存目录标记
-
-# ==========================================
-# 📦 依赖和包管理
-# ==========================================
-node_modules/          # Node.js 依赖
-.npm
-.yarn-integrity
-yarn-error.log
-
-# ==========================================
-# 🌐 Web 相关
-# ==========================================
-.sass-cache/
-*.css.map
-*.js.map
-
-# ==========================================
-# 🔄 版本控制
-# ==========================================
-.git/
-*.orig                 # 合并冲突文件
-
-# ==========================================
-# 📋 文档草稿 (可选)
-# ==========================================
-# 如果你想保留所有文档，可以注释掉这些
-# FIXES_SUMMARY.md
-# *_FIX.md
-# KEYWORD_ISOLATION_GUIDE.md
-# SCHEDULER_GUIDE.md
-# TASK_STATUS_GUIDE.md
-
-# ==========================================
-# 🎯 项目特定的临时文件
-# ==========================================
-twitter_scraper_enhanced.py  # 增强版爬虫 (如果不需要)
-twitter_scraper_selenium.py  # Selenium 爬虫 (如果不需要)
-patch_*.py                   # 补丁文件
-migrate_*.py                 # 迁移脚本 (完成后可删除)
-
-# ==========================================
-# 💾 备份文件
-# ==========================================
+.lock
+CACHEDIR.TAG
 *.bak
 *.backup
-*_backup.*
-*_old.*
 
 # ==========================================
-# 📊 分析和报告文件
+# 🕷️ 备选爬虫脚本 (不提交)
 # ==========================================
-analysis_report_*.json      # 按关键词生成的报告
-*.xlsx                       # Excel 文件
-*.csv                        # CSV 数据文件 (除非是配置)
+twitter_scraper_*.py
+*_enhanced.py
 
 # ==========================================
-# 🔍 搜索和索引文件
+# 🏃 运行脚本 (不提交)
 # ==========================================
-.fuse_hidden*               # Linux FUSE
-.directory                  # KDE 目录配置
-.Trash-*                    # Linux 回收站
+run_*.py
 
 # ==========================================
-# 📱 移动端相关 (如果有)
+# 🔧 IDE 和系统文件
 # ==========================================
-*.ipa                       # iOS 应用包
-*.apk                       # Android 应用包
-*.aab                       # Android App Bundle
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
 
 # ==========================================
-# 🎨 设计文件 (大文件)
+# � 依赖文件
 # ==========================================
-*.psd                       # Photoshop 文件
-*.ai                        # Illustrator 文件
-*.sketch                    # Sketch 文件
+node_modules/
 
 # ==========================================
-# 📹 媒体文件 (如果有)
+# 🎯 只提交这些核心文件：
 # ==========================================
-*.mp4
-*.avi
-*.mov
-*.wmv
-*.flv
-*.webm
-
-# ==========================================
-# 🔐 证书和密钥
-# ==========================================
-*.pem
-*.key
-*.crt
-*.cer
-*.p12
-*.pfx
-
-# ==========================================
-# 📊 性能分析文件
-# ==========================================
-*.prof
-*.profile
-
-# ==========================================
-# 🧹 清理脚本生成的文件
-# ==========================================
-cleaned_data_backup.json
-old_data_backup.json
+# ✅ api.py              - FastAPI 后端
+# ✅ collect.py          - 数据采集
+# ✅ data_cleaning.py    - 数据清洗  
+# ✅ ai_analysis.py      - AI 分析
+# ✅ requirements.txt    - Python 依赖
+# ✅ README.md           - 项目文档
+# ✅ TECHNICAL.md        - 技术文档
+# ✅ ANTI_SCRAPING.md    - 反爬策略
+# ✅ frontend/lib/       - Flutter 源码
+# ✅ frontend/pubspec.yaml - Flutter 依赖
+# ✅ .gitignore          - 本文件
+# ✅ .env.example        - 环境变量示例
